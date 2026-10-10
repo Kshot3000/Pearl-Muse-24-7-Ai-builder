@@ -310,6 +310,18 @@ test("app.js grain formatter is BigInt-exact (pool float-format class)", async (
   assert.ok(src.includes("/^-?\\d+$/"), "integer-grain gate present");
 });
 
+test("vault refuses a malformed vout (parseInt truncation class)", () => {
+  const balBefore = $("vault-balance").textContent;
+  $("m-txid").value = "ef".repeat(32);
+  // parseInt("1.9") silently became vout 1 — a different outpoint than typed
+  $("m-vout").value = "1.9";
+  $("m-value").value = "2.5";
+  $("add-utxo").click();
+  assert.equal($("vault-error").hidden, false, "malformed vout must error");
+  assert.match($("vault-error").textContent, /bad vout/, $("vault-error").textContent);
+  assert.equal($("vault-balance").textContent, balBefore, "no UTXO may be added from a malformed vout");
+});
+
 test("vault refuses inexact UTXO values (float-parser round-up class)", () => {
   const balBefore = $("vault-balance").textContent;
   $("m-txid").value = "cd".repeat(32);

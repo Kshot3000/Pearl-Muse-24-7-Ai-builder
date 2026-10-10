@@ -6013,6 +6013,7 @@ zoo`.split("\n");
     return { txid, hex, fee: inSum - commitValue - change, change };
   }
   function buildRevealTxSigned({ plan, commitTxid, commitVout, internalPriv, changeAddress }) {
+    if (!Number.isInteger(commitVout) || commitVout < 0 || commitVout > 4294967295) throw new Error("bad commit vout");
     const { network } = plan;
     const changeProgram = addressToProgram(changeAddress, plan.network);
     const outputs = [...plan.ownerOutputs, ...plan.feeOutputs];

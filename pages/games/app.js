@@ -482,11 +482,13 @@
     try {
       if (!S.game) throw new Error("create (or paste) a game first.");
       const role = els.in_refund_role.value;
+      const voutRaw = els.in_refund_vout.value.trim();
+      if (!/^\d+$/.test(voutRaw) || !Number.isSafeInteger(Number(voutRaw))) throw new Error("funding vout must be a non-negative integer");
       const tip = await G.fetchTipHeight(S.blockbook);
       const r = G.buildRefundTx({
         network: S.network, gameParams: S.game, depositor: role,
         funding: {
-          txid: els.in_refund_txid.value.trim(), vout: parseInt(els.in_refund_vout.value, 10),
+          txid: els.in_refund_txid.value.trim(), vout: Number(voutRaw),
           value: Number(S.game["stake" + role[0].toUpperCase() + role.slice(1) + "Grains"]),
           address: S.escrows[role].address,
         },

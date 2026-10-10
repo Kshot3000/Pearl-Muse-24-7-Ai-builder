@@ -213,6 +213,14 @@ test("verifyNotarizationWitness rejects non-notary reveals", async () => {
   assert.throws(() => verifyNotarizationWitness(r.hex, "test"), /no prl-notary envelope/);
 });
 
+test("buildRevealTxSigned refuses a malformed commit vout (shared etch core guard)", () => {
+  for (const v of [-5, NaN, 1.5, 2 ** 32]) {
+    assert.throws(
+      () => buildRevealTxSigned({ plan, commitTxid: commit.txid, commitVout: v, internalPriv: wallet.priv, changeAddress: OWNER }),
+      /bad commit vout/, "commitVout " + v);
+  }
+});
+
 test("seal certificate carries the full audit trail", () => {
   const cert = buildSealCertificate({ plan, commitTxid: commit.txid, revealTxid: reveal.txid, blockHeight: 120200, blockTime: 1790000000 });
   assert.equal(cert.app, "Pearl Notary");

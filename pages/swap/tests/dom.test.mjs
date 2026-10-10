@@ -386,6 +386,26 @@ test("refund guard: Bob's key cannot refund", () => {
   assert.ok(/alice/i.test($("refund-error").textContent), $("refund-error").textContent);
 });
 
+test("lock/claim/refund refuse malformed vouts (parseInt truncation class)", () => {
+  // parseInt("1.9")/"1e2" silently became vout 1 in all three builders
+  $("lock-m-txid").value = "dd".repeat(32);
+  $("lock-m-vout").value = "1.9";
+  $("lock-m-value").value = "20";
+  $("lock-add-utxo").click();
+  assert.equal($("lock-error").hidden, false, "malformed lock vout must error");
+  assert.match($("lock-error").textContent, /bad vout/, $("lock-error").textContent);
+  $("claim-key").value = MNEMONICS[1];
+  $("claim-utxo-vout").value = "1e2";
+  $("claim-build-btn").click();
+  assert.equal($("claim-error").hidden, false, "malformed claim vout must error");
+  assert.match($("claim-error").textContent, /bad utxo vout/, $("claim-error").textContent);
+  $("refund-key").value = MNEMONICS[0];
+  $("refund-utxo-vout").value = "abc";
+  $("refund-build-btn").click();
+  assert.equal($("refund-error").hidden, false, "malformed refund vout must error");
+  assert.match($("refund-error").textContent, /bad utxo vout/, $("refund-error").textContent);
+});
+
 test("amount inputs use the exact core parsers (float-parse class closed)", () => {
   const src = fs.readFileSync(resolvePath(dir, "app.js"), "utf8");
   assert.ok(src.includes("E.parsePRLToGrains(str)"), "parsePRL delegates to the core exact parser");
@@ -393,7 +413,7 @@ test("amount inputs use the exact core parsers (float-parse class closed)", () =
   assert.ok(!src.includes("Math.round(v * E.GRAIN_PER_PRL)"), "no float PRL parse left");
   assert.ok(!src.includes("Math.round(v * 1e8)"), "no float BTC parse left");
   assert.ok(html.includes("pearl-swap.bundle.js?v=3"), "bundle cache key bumped");
-  assert.ok(html.includes('src="app.js?v=3"'), "app cache key bumped");
+  assert.ok(html.includes('src="app.js?v=4"'), "app cache key bumped");
 });
 
 test("app.js grain formatter is BigInt-exact (pool float-format class)", async () => {

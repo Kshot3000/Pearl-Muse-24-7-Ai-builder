@@ -5,6 +5,7 @@
 // indexer-style witness round-trip parsing.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import {
   NETWORKS, PRLS, DUST_GRAIN, CARRIER_VALUE_GRAINS,
@@ -270,6 +271,27 @@ test("app.js grain formatter is BigInt-exact (pool float-format class)", async (
   const src = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "..", "app.js"), "utf8");
   assert.ok(src.includes("100000000n"), "BigInt-exact grain formatter present");
   assert.ok(src.includes("/^-?\\d+$/"), "integer-grain gate present");
+});
+
+test("buildRevealTxSigned refuses a malformed commit vout (no u32 wrap into a signed tx)", () => {
+  const plan = planInscription({
+    network: net, internalXOnly: wallet.internalXOnly,
+    ops: [{ op: "mint", params: { tick: "prls", amt: "100000" } }],
+    ownerAddress: OWNER, changeAddress: OWNER, feeRate: 5,
+  });
+  // u32le wrapped each of these into a plausible-looking outpoint and the
+  // reveal was signed over it (probe: hidden_files/run-2026-10-10-1813).
+  for (const v of [-5, NaN, 1.5, 2 ** 32]) {
+    assert.throws(
+      () => buildRevealTxSigned({ plan, commitTxid: "11".repeat(32), commitVout: v, internalPriv: wallet.priv, changeAddress: OWNER }),
+      /bad commit vout/, "commitVout " + v);
+  }
+});
+
+test("reveal UI parses the commit vout strictly (no parseInt truncation / || 0 coercion)", () => {
+  const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  assert.ok(!app.includes('parseInt($("reveal-commit-vout")'), "no parseInt on the commit vout field");
+  assert.ok(app.includes("commit vout must be a non-negative integer"), "strict vout gate present");
 });
 
 test("buildCommitTx refuses malformed funding inputs up front (no NaN/rounded fee math)", () => {

@@ -331,8 +331,10 @@
     try {
       const txid = $("lock-m-txid").value.trim().toLowerCase();
       if (!/^[0-9a-f]{64}$/.test(txid)) throw new Error("txid must be 64 hex characters");
-      const vout = parseInt($("lock-m-vout").value, 10);
-      if (!Number.isInteger(vout) || vout < 0) throw new Error("bad vout");
+      const voutRaw = $("lock-m-vout").value.trim();
+      if (!/^\d+$/.test(voutRaw)) throw new Error("bad vout");
+      const vout = Number(voutRaw);
+      if (!Number.isSafeInteger(vout) || vout < 0) throw new Error("bad vout");
       const value = parsePRL($("lock-m-value").value);
       const spkHex = $("lock-m-spk").value.trim().toLowerCase() || null;
       if (spkHex && !/^[0-9a-f]+$/.test(spkHex)) throw new Error("scriptPubKey must be hex");
@@ -563,9 +565,11 @@
     try {
       if (!S.swap) throw new Error("load the swap spec first");
       const { priv } = privFromInput($("claim-key").value);
+      const claimVoutRaw = $("claim-utxo-vout").value.trim();
+      if (!/^\d+$/.test(claimVoutRaw) || !Number.isSafeInteger(Number(claimVoutRaw))) throw new Error("bad utxo vout");
       const utxo = {
         txid: $("claim-utxo-txid").value.trim().toLowerCase(),
-        vout: parseInt($("claim-utxo-vout").value, 10),
+        vout: Number(claimVoutRaw),
         value: parsePRL($("claim-utxo-value").value),
       };
       const claim = E.buildClaimSpend(S.network, S.swap, {
@@ -652,9 +656,11 @@
     try {
       if (!S.swap) throw new Error("load the swap spec first");
       const { priv } = privFromInput($("refund-key").value);
+      const refundVoutRaw = $("refund-utxo-vout").value.trim();
+      if (!/^\d+$/.test(refundVoutRaw) || !Number.isSafeInteger(Number(refundVoutRaw))) throw new Error("bad utxo vout");
       const utxo = {
         txid: $("refund-utxo-txid").value.trim().toLowerCase(),
-        vout: parseInt($("refund-utxo-vout").value, 10),
+        vout: Number(refundVoutRaw),
         value: parsePRL($("refund-utxo-value").value),
       };
       const currentHeight = parseInt($("refund-height").value, 10);

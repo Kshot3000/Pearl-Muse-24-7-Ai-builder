@@ -258,8 +258,10 @@
     try {
       const txid = $("m-txid").value.trim().toLowerCase();
       if (!/^[0-9a-f]{64}$/.test(txid)) throw new Error("txid must be 64 hex characters");
-      const vout = parseInt($("m-vout").value, 10);
-      if (!Number.isInteger(vout) || vout < 0) throw new Error("bad vout");
+      const voutRaw = $("m-vout").value.trim();
+      if (!/^\d+$/.test(voutRaw)) throw new Error("bad vout");
+      const vout = Number(voutRaw);
+      if (!Number.isSafeInteger(vout) || vout < 0) throw new Error("bad vout");
       const value = parsePRL($("m-value").value);
       const u = { txid, vout, value, confirmations: "?" };
       if (S.utxos.some((x) => x.txid === txid && x.vout === vout)) throw new Error("UTXO already listed");

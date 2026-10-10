@@ -248,6 +248,21 @@ test("fund: manual funding txid activates state 0", () => {
   assert.ok(T.text("state-minelabel").includes("10"), "mine label: " + T.text("state-minelabel"));
 });
 
+test("fund: malformed manual vout is refused, never silently coerced to another outpoint", () => {
+  // parseInt truncated "1.9"/"1e2" to 1 and || 0 mapped "abc"/"" to 0 — a
+  // mistyped vout silently pointed the channel at the wrong funding output.
+  for (const bad of ["1.9", "1e2", "1xyz", "abc", "-5", ""]) {
+    T.set("fund-manualtxid", FUNDING_TXID);
+    T.set("fund-manualvout", bad);
+    T.click("fund-manualgo");
+    const e = T.err("fund-error");
+    assert.ok(!e.hidden, "error shown for " + JSON.stringify(bad));
+    assert.match(e.text, /funding vout/, e.text);
+    assert.equal(T.state().fundingVout, 0, "funding vout unchanged for " + JSON.stringify(bad));
+    assert.equal(T.state().states.length, 1, "state not rebuilt for " + JSON.stringify(bad));
+  }
+});
+
 test("state: propose 1 PRL payment builds the pair", () => {
   T.set("pay-direction", "out");
   T.set("pay-amount", "1");

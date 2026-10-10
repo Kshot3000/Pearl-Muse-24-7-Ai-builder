@@ -28,6 +28,13 @@
     b.textContent = "Error: " + (e && e.message ? e.message : e);
   }
   function clearError(boxId) { const b = $(boxId); b.hidden = true; b.textContent = ""; }
+  function parseVoutField(id) {
+    const raw = $(id).value.trim();
+    if (!/^\d+$/.test(raw)) throw new Error("funding vout must be a non-negative integer");
+    const n = Number(raw);
+    if (!Number.isSafeInteger(n)) throw new Error("funding vout must be a non-negative integer");
+    return n;
+  }
   function grainsToPRL(g) { return P.fmtPRL(g) + " PRL"; }
   function download(name, text) {
     const a = document.createElement("a");
@@ -298,7 +305,7 @@
     try {
       const txid = $("fund-manualtxid").value.trim();
       if (!/^[0-9a-fA-F]{64}$/.test(txid)) throw new Error("funding txid must be 64 hex characters");
-      onFunded(txid.toLowerCase(), parseInt($("fund-manualvout").value, 10) || 0);
+      onFunded(txid.toLowerCase(), parseVoutField("fund-manualvout"));
     } catch (e) { showError("fund-error", e); }
   });
 
@@ -708,7 +715,7 @@
         NET, chan,
         $("verify-hex").value.trim(),
         $("verify-fundingtxid").value.trim(),
-        parseInt($("verify-fundingvout").value, 10) || 0,
+        parseVoutField("verify-fundingvout"),
         state,
         state.myPayoutAddr,
         parseFloat($("verify-feerate").value)

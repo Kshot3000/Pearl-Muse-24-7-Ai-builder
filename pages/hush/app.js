@@ -120,8 +120,10 @@
     var out = [];
     Array.prototype.forEach.call(document.querySelectorAll("#se-inputs tbody tr"), function (tr) {
       function v(k) { return tr.querySelector("input[data-k='" + k + "']").value; }
+      var voutRaw = v("vout").trim();
+      if (!/^\d+$/.test(voutRaw) || !Number.isSafeInteger(Number(voutRaw))) throw new Error("bad vout: need a non-negative integer");
       out.push({
-        txid: v("txid"), vout: parseInt(v("vout"), 10),
+        txid: v("txid"), vout: Number(voutRaw),
         prevoutSpk: v("spk"), scriptSig: v("scriptSig"), txinwitness: v("witness"),
         privkey: v("privkey"),
       });

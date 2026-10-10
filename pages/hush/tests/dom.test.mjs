@@ -104,5 +104,10 @@ ok("self-test uses the real vector output key", appSrc.includes(realOut), realOu
 ok("self-test uses the real vector private key", appSrc.includes(case6.sending[0].given.vin[0].private_key));
 ok("self-test uses the real vector witness", appSrc.includes(case6.sending[0].given.vin[0].txinwitness));
 
+/* 10. input vouts are parsed strictly in app.js (parseInt truncation class) */
+ok("app.js parses input vouts strictly (no parseInt truncation)",
+  !appSrc.includes('parseInt(v("vout")') && appSrc.includes("bad vout: need a non-negative integer"));
+ok("app.js cache key bumped", html.includes("app.js?v=2"));
+
 console.log(`\ndom: ${pass} pass, ${fail} fail`);
 process.exit(fail ? 1 : 0);

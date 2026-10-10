@@ -306,8 +306,10 @@
     try {
       const txid = $("reveal-commit-txid").value.trim();
       if (!/^[0-9a-f]{64}$/i.test(txid)) throw new Error("Enter the commit txid first.");
+      const voutRaw = $("reveal-commit-vout").value.trim();
+      if (!/^\d+$/.test(voutRaw) || !Number.isSafeInteger(Number(voutRaw))) throw new Error("commit vout must be a non-negative integer");
       const r = E.buildRevealTxSigned({
-        plan: S.plan, commitTxid: txid, commitVout: parseInt($("reveal-commit-vout").value, 10) || 0,
+        plan: S.plan, commitTxid: txid, commitVout: Number(voutRaw),
         internalPriv: S.wallet.priv, changeAddress: S.wallet.address,
       });
       S.reveal = r;

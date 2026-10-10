@@ -397,5 +397,14 @@ test("stakes preview escapes the prlToGrains error message", () => {
   assert.match(app, /function esc\(s\)/);
   assert.ok(app.includes("${esc(e.message)}"), "preview error escaped");
   assert.ok(!app.includes("${e.message}"), "no raw e.message interpolation remains");
-  assert.ok(html.includes('app.js?v=2'), "cache key bumped");
+  assert.ok(html.includes('app.js?v=3'), "cache key bumped");
+});
+
+// Regression pin: the refund funding vout was read with bare parseInt, so
+// "1.9"/"1e2" silently became vout 1 — a refund signed over the wrong
+// outpoint. The field is now parsed with the fleet's strict digits gate.
+test("refund UI parses the funding vout strictly (parseInt truncation class)", () => {
+  const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  assert.ok(!app.includes("parseInt(els.in_refund_vout"), "no parseInt on the refund vout field");
+  assert.ok(app.includes("funding vout must be a non-negative integer"), "strict vout gate present");
 });

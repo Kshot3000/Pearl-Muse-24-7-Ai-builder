@@ -205,6 +205,7 @@ export function buildCommitTx({ network, fundingInputs, commitProgram, commitVal
 /** Build + sign the reveal transaction spending the commit output via the
  *  script path. Returns { txid, hex, fee, change, digest, sig }. */
 export function buildRevealTxSigned({ plan, commitTxid, commitVout, internalPriv, changeAddress }) {
+  if (!Number.isInteger(commitVout) || commitVout < 0 || commitVout > 0xffffffff) throw new Error("bad commit vout");
   const { network } = plan;
   const changeProgram = addressToProgram(changeAddress, plan.network);
   const outputs = [...plan.ownerOutputs, ...plan.feeOutputs];
