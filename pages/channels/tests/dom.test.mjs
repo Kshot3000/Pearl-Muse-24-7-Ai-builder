@@ -207,6 +207,21 @@ test("open: junk peer key refused loudly", () => {
   assert.ok(T.state().chan === null, "no channel created");
 });
 
+test("open: malformed CSV delay is refused, never truncated into a shorter dispute window", () => {
+  T.set("open-mykey", XONLY_A);
+  T.set("open-peerkey", XONLY_B);
+  T.set("open-mypayout", PAYOUT_ME);
+  T.set("open-peerpayout", PAYOUT_PEER);
+  T.set("open-mycap", "10");
+  T.set("open-peercap", "5");
+  T.set("open-csv", "1e2"); // bare parseInt silently made this a 1-block CSV delay
+  T.click("open-build");
+  const e = T.err("open-error");
+  assert.ok(!e.hidden, "error shown");
+  assert.match(e.text, /CSV delay must be a whole number of blocks/);
+  assert.ok(T.state().chan === null, "no channel created");
+});
+
 test("open: channel opens, descriptor + address render", () => {
   T.set("open-mykey", XONLY_A);
   T.set("open-peerkey", XONLY_B);

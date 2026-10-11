@@ -174,11 +174,16 @@
       if (!S.blockbook) throw new Error("set a Blockbook URL (no public testnet Blockbook is known — run your own or use mainnet).");
       const dealerKey = G.gameKeyFromInput(els.in_dealer.value, net);
       const playerKey = G.gameKeyFromInput(els.in_player.value, net);
+      /* Strict timeout parse: bare parseInt truncated "51200abc"/"51200.9"
+       * to 51200 and "1e5" to 1 — a silently wrong refund height baked into
+       * both escrow scripts. Digits only, like the refund vout below. */
+      const timeoutRaw = els.in_timeout.value.trim();
+      if (!/^\d+$/.test(timeoutRaw) || !Number.isSafeInteger(Number(timeoutRaw))) throw new Error("timeout height must be a whole block height");
       const game = G.createGame({
         network: net, game: els.in_game.value, bet: els.in_bet.value,
         dealerXOnly: dealerKey.xonly, playerXOnly: playerKey.xonly,
         playerStakePRL: els.in_stake.value,
-        timeoutHeight: parseInt(els.in_timeout.value, 10),
+        timeoutHeight: Number(timeoutRaw),
       });
       S.game = game; S.dealerKey = dealerKey; S.playerKey = playerKey;
       S.secret = null; S.commitment = null; S.commitmentLocked = null;

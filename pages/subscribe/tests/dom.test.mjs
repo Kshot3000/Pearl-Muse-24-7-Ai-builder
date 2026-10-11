@@ -190,6 +190,39 @@ test("full service -> terms -> fund -> pre-sign -> verify flow in stub DOM", () 
   assert.ok($("vf-out").innerHTML.includes("Bundle invalid"), "tampered bundle rejected");
 });
 
+test("service refuses malformed integer terms, never truncates them into the descriptor", () => {
+  const { ctx, $ } = boot();
+  const E = ctx.PearlSubscribe;
+  const NW = E.NETWORKS.mainnet;
+  $("network").value = "mainnet";
+  $("sub-period").value = "3118";
+  $("sub-merchant").value = E.subscriberKeyFromInput("22".repeat(32), NW).keypathAddress;
+  $("sub-anchor").value = E.subscriberKeyFromInput("11".repeat(32), NW).keypathAddress;
+  $("sub-amount").value = "1";
+  $("sub-periods").value = "3";
+  $("sub-start").value = "512340xyz"; // bare parseInt silently used 512340
+  $("sub-feerate").value = "5";
+  $("service-next").click();
+  assert.equal($("service-err").hidden, false, "malformed start height must error");
+  assert.match($("service-err").textContent, /start height must be a whole number/);
+  $("sub-start").value = "512340";
+  $("sub-periods").value = "3abc"; // bare parseInt silently used 3
+  $("service-next").click();
+  assert.equal($("service-err").hidden, false, "malformed periods must error");
+  assert.match($("service-err").textContent, /periods must be a whole number/);
+  $("sub-periods").value = "3";
+  $("sub-feerate").value = "5abc"; // bare parseInt silently used 5
+  $("service-next").click();
+  assert.equal($("service-err").hidden, false, "malformed fee rate must error");
+  assert.match($("service-err").textContent, /fee rate must be a whole number/);
+  $("sub-feerate").value = "5";
+  $("sub-period").value = "custom";
+  $("sub-period-custom").value = "445abc"; // bare parseInt silently used 445
+  $("service-next").click();
+  assert.equal($("service-err").hidden, false, "malformed custom period must error");
+  assert.match($("service-err").textContent, /custom period must be a whole number/);
+});
+
 test("service refuses invalid terms loudly", () => {
   const { $ } = boot();
   $("network").value = "mainnet";

@@ -35,6 +35,15 @@
     if (!Number.isSafeInteger(n)) throw new Error("funding vout must be a non-negative integer");
     return n;
   }
+  /* Strict CSV-delay parse: bare parseInt truncated "1e2" to 1 and "144.9"
+   * to 144 — a silently shrunk dispute window. Digits only, like the vouts. */
+  function parseCsvField() {
+    const raw = $("open-csv").value.trim();
+    if (!/^\d+$/.test(raw)) throw new Error("CSV delay must be a whole number of blocks");
+    const n = Number(raw);
+    if (!Number.isSafeInteger(n)) throw new Error("CSV delay must be a whole number of blocks");
+    return n;
+  }
   function grainsToPRL(g) { return P.fmtPRL(g) + " PRL"; }
   function download(name, text) {
     const a = document.createElement("a");
@@ -163,7 +172,7 @@
         peerPayoutAddr,
         myCapacityGrains: P.parsePRL($("open-mycap").value || "0"),
         peerCapacityGrains: P.parsePRL($("open-peercap").value || "0"),
-        csvDelay: parseInt($("open-csv").value, 10),
+        csvDelay: parseCsvField(),
         networkId: NET,
       });
       setChannel(chan, myPayoutAddr);

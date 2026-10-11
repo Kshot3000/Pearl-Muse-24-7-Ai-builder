@@ -505,5 +505,16 @@ test("fund rows escape address/backer/txid in titles and text", () => {
   assert.match(app, /function esc\(s\)/);
   assert.ok(!/title="\$\{(r|e)\.(address|backer|txid)\}"/.test(app), "no raw title interpolation");
   assert.equal((app.match(/title="\$\{esc\(/g) || []).length, 4, "all four titles escaped");
-  assert.ok(html.includes('app.js?v=2'), "cache key bumped");
+  assert.ok(html.includes('app.js?v=3'), "cache key bumped");
+});
+
+// Regression pin: the campaign deadline was read with bare parseInt, so
+// "900000abc"/"900000.9" silently became 900000 — a wrong CLTV deadline in
+// the campaign descriptor. The field is now parsed with a strict digits gate.
+test("launch UI parses the campaign deadline strictly (parseInt truncation class)", () => {
+  const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.ok(!app.includes("parseInt(String(els.lcDeadline.value)"), "no parseInt on the deadline field");
+  assert.ok(app.includes("deadline must be a whole block height"), "strict deadline gate present");
+  assert.ok(html.includes('app.js?v=3'), "cache key bumped");
 });

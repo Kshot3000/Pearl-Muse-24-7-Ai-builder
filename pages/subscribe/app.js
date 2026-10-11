@@ -61,10 +61,21 @@
   document.querySelectorAll("#steps button").forEach((b) =>
     b.addEventListener("click", () => goto(b.dataset.step)));
 
+  /* Strict integer field parse: bare parseInt truncated "445abc" to 445,
+   * "512340.9" to 512340 and "5abc" to 5 — silently wrong terms baked into
+   * the fingerprinted descriptor and the presigned locktime schedule. */
+  function strictIntField(id, label) {
+    const raw = $(id).value.trim();
+    if (!/^\d+$/.test(raw)) throw new Error(label + " must be a whole number");
+    const n = Number(raw);
+    if (!Number.isSafeInteger(n)) throw new Error(label + " must be a whole number");
+    return n;
+  }
+
   function readTerms() {
     const periodSel = $("sub-period").value;
     const periodBlocks = periodSel === "custom"
-      ? parseInt($("sub-period-custom").value, 10)
+      ? strictIntField("sub-period-custom", "custom period")
       : parseInt(periodSel, 10);
     const netKey = $("network").value;
     return {
@@ -73,9 +84,9 @@
       anchor: $("sub-anchor").value.trim(),
       amountGrains: Number(E.parsePRL($("sub-amount").value.trim() || "0")),
       periodBlocks,
-      periods: parseInt($("sub-periods").value, 10),
-      startHeight: parseInt($("sub-start").value, 10),
-      feeRate: parseInt($("sub-feerate").value, 10),
+      periods: strictIntField("sub-periods", "periods"),
+      startHeight: strictIntField("sub-start", "start height"),
+      feeRate: strictIntField("sub-feerate", "fee rate"),
     };
   }
 

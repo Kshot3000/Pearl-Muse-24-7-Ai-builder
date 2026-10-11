@@ -240,7 +240,11 @@
         try { currentHeight = await R.fetchChainHeight(base); }
         catch { /* future-check becomes the UI's honesty job */ }
       }
-      const deadline = parseInt(String(els.lcDeadline.value).trim(), 10);
+      /* Strict deadline parse: bare parseInt truncated "900000abc"/"900000.9"
+       * to 900000 — a silently wrong CLTV deadline in the campaign descriptor. */
+      const deadlineRaw = String(els.lcDeadline.value).trim();
+      if (!/^\d+$/.test(deadlineRaw) || !Number.isSafeInteger(Number(deadlineRaw))) throw new Error("deadline must be a whole block height");
+      const deadline = Number(deadlineRaw);
       const { campaign } = R.createCampaign({
         network,
         recipientAddr: els.lcRecipient.value,

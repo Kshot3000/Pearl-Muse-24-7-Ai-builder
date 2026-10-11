@@ -397,7 +397,18 @@ test("stakes preview escapes the prlToGrains error message", () => {
   assert.match(app, /function esc\(s\)/);
   assert.ok(app.includes("${esc(e.message)}"), "preview error escaped");
   assert.ok(!app.includes("${e.message}"), "no raw e.message interpolation remains");
-  assert.ok(html.includes('app.js?v=3'), "cache key bumped");
+  assert.ok(html.includes('app.js?v=4'), "cache key bumped");
+});
+
+// Regression pin: the timeout height was read with bare parseInt, so
+// "51200abc"/"51200.9" silently became 51200 and "1e5" became 1 — a wrong
+// refund height baked into both escrow scripts. Strict digits gate now.
+test("create UI parses the timeout height strictly (parseInt truncation class)", () => {
+  const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.ok(!app.includes("timeoutHeight: parseInt(els.in_timeout.value"), "no parseInt on the timeout field");
+  assert.ok(app.includes("timeout height must be a whole block height"), "strict timeout gate present");
+  assert.ok(html.includes('app.js?v=4'), "cache key bumped");
 });
 
 // Regression pin: the refund funding vout was read with bare parseInt, so
