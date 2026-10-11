@@ -171,7 +171,12 @@
         if (!(vestSeconds > 0)) throw new Error("vesting duration must be positive");
         if (cliffSeconds < 0) throw new Error("cliff cannot be negative");
         if (cliffSeconds >= vestSeconds) throw new Error("cliff must be shorter than the vesting duration");
-        const trancheCount = parseInt($("tranches").value, 10);
+        /* Strict tranche-count parse: bare parseInt truncated "12.9"
+           to 12 and "1e1" to 1, silently re-splitting the schedule
+           that the descriptor fingerprints. */
+        const trancheRaw = $("tranches").value.trim();
+        if (!/^\d+$/.test(trancheRaw)) throw new Error("tranche count must be an integer in 1..64");
+        const trancheCount = Number(trancheRaw);
         planned = E.planSchedule({
           network: net, beneficiary: ben, funderXOnly: funderIn.xonly,
           totalGrains, startTime, cliffSeconds, vestSeconds, trancheCount, revocable,

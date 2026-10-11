@@ -241,3 +241,20 @@ test("register: malformed pasted UTXO refused at parse time (garbage suffix / ro
   assert.equal(getEl("r-bc-err").hidden, false);
   assert.ok(getEl("r-bc-err").textContent.includes("bad vout"), "err: " + getEl("r-bc-err").textContent);
 });
+
+test("register: malformed expiry refused, not truncated into the signed binding", () => {
+  setVal("r-name", "strict-expiry");
+  setVal("r-expiry", "1893456000.9");
+  click("r-check");
+  assert.equal(getEl("r-name-err").hidden, false);
+  assert.ok(getEl("r-name-err").textContent.includes("expiry must be a positive unix timestamp"), "err: " + getEl("r-name-err").textContent);
+  assert.equal(getEl("r-name-ok").hidden, true);
+  setVal("r-expiry", "99999999999999999999");
+  click("r-check");
+  assert.equal(getEl("r-name-err").hidden, false);
+  assert.ok(getEl("r-name-err").textContent.includes("expiry must be a positive unix timestamp"), "err: " + getEl("r-name-err").textContent);
+  setVal("r-expiry", "1893456000");
+  click("r-check");
+  assert.equal(getEl("r-name-err").hidden, true, "no name error: " + getEl("r-name-err").textContent);
+  assert.equal(getEl("r-name-ok").hidden, false);
+});

@@ -98,7 +98,7 @@ export const displayName = (name) => `${name}${NAME_SUFFIX}`;
 const MIN_TS = Date.UTC(2026, 0, 1) / 1000;
 
 function checkTimestamp(ts, field, allowFuture) {
-  if (!Number.isInteger(ts)) throw new Error(`${field} must be an integer unix timestamp`);
+  if (!Number.isSafeInteger(ts)) throw new Error(`${field} must be an integer unix timestamp`);
   if (ts < MIN_TS) throw new Error(`${field} is before the Pearl Names epoch`);
   if (!allowFuture && ts > Math.floor(Date.now() / 1000) + 600)
     throw new Error(`${field} is more than 10 minutes in the future`);

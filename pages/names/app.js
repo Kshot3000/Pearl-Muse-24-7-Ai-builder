@@ -84,8 +84,16 @@
       var n = E.validateName(raw);
       regName = n; regNetwork = $("r-network").value;
       var ex = $("r-expiry").value.trim();
-      regExpiry = ex === "" ? null : parseInt(ex, 10);
-      if (regExpiry !== null && (!Number.isInteger(regExpiry) || regExpiry <= 0)) throw new Error("expiry must be a positive unix timestamp");
+      /* Strict expiry parse: bare parseInt truncated "1893456000.9" to
+         1893456000 and exponent input to its leading digit, and a long
+         digit string became an unsafe integer — the value is signed
+         into the binding as expires_at, so refuse anything but digits. */
+      regExpiry = null;
+      if (ex !== "") {
+        if (!/^\d+$/.test(ex)) throw new Error("expiry must be a positive unix timestamp");
+        regExpiry = Number(ex);
+        if (!Number.isSafeInteger(regExpiry) || regExpiry <= 0) throw new Error("expiry must be a positive unix timestamp");
+      }
       // local availability check
       var regs = loadRegistry();
       var taken = regs.some(function (r) {

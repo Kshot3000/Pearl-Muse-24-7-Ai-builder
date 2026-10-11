@@ -64,6 +64,7 @@ t("composeBinding rejects bad fields", () => {
   throws(() => composeBinding({ ...good, xonly: "zz" }), "64");
   throws(() => composeBinding({ ...good, registeredAt: 100 }), "epoch");
   throws(() => composeBinding({ ...good, expiresAt: 1788000000 }), "after registered_at");
+  throws(() => composeBinding({ ...good, expiresAt: 100000000000000000000 }), "integer unix timestamp");
   throws(() => composeBinding({ ...good, name: "root" }), "reserved");
 });
 t("composeBinding allows expires_at years in the future", () => {

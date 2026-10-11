@@ -135,7 +135,12 @@
       const tickSeconds = Math.round(parseFloat($("tick-value").value) * parseInt($("tick-unit").value, 10));
       const startTime = Math.floor(new Date($("start").value).getTime() / 1000);
       if (!Number.isFinite(startTime) || startTime <= 0) throw new Error("start date is invalid");
-      const tickCount = parseInt($("ticks").value, 10);
+      /* Strict tick-count parse: bare parseInt truncated "12.9" to 12
+         and "1e2" to 1, silently shrinking the stream total
+         (rate x tickCount) in the fingerprinted descriptor. */
+      const tickRaw = $("ticks").value.trim();
+      if (!/^\d+$/.test(tickRaw)) throw new Error("tick count must be an integer in 1..256");
+      const tickCount = Number(tickRaw);
       const planned = E.planStream({
         network: net, beneficiary: ben, funderXOnly: funderIn.xonly,
         rateGrainsPerTick, tickSeconds, startTime, tickCount,

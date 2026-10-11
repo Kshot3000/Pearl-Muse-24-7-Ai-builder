@@ -6027,6 +6027,7 @@ zoo`.split("\n");
     return { txid, hex, fee: inSum - commitValue - change, change };
   }
   function buildRevealTxSigned({ plan, commitTxid, commitVout, internalPriv, changeAddress }) {
+    if (!Number.isInteger(commitVout) || commitVout < 0 || commitVout > 4294967295) throw new Error("bad commit vout");
     const { network } = plan;
     const changeProgram = addressToProgram(changeAddress, plan.network);
     const outputs = [...plan.ownerOutputs, ...plan.feeOutputs];
@@ -6241,7 +6242,7 @@ zoo`.split("\n");
   var displayName = (name) => `${name}${NAME_SUFFIX}`;
   var MIN_TS = Date.UTC(2026, 0, 1) / 1e3;
   function checkTimestamp(ts, field, allowFuture) {
-    if (!Number.isInteger(ts)) throw new Error(`${field} must be an integer unix timestamp`);
+    if (!Number.isSafeInteger(ts)) throw new Error(`${field} must be an integer unix timestamp`);
     if (ts < MIN_TS) throw new Error(`${field} is before the Pearl Names epoch`);
     if (!allowFuture && ts > Math.floor(Date.now() / 1e3) + 600)
       throw new Error(`${field} is more than 10 minutes in the future`);

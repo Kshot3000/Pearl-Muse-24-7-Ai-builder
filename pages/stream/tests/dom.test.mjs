@@ -363,7 +363,7 @@ test("forge rejects sub-grain rates instead of silently rounding them", () => {
   assert.ok(src.includes("E.parsePRLToGrains($(\"rate\").value)"), "rate uses exact parser");
   assert.ok(!/parseFloat\([^)]*\)\s*\*\s*E\.GRAIN_PER_PRL/.test(src), "no float money parse remains");
   assert.ok(html.includes("pearl-stream.bundle.js?v=3"), "bundle cache pin");
-  assert.ok(html.includes("app.js?v=3"), "app cache pin");
+  assert.ok(html.includes("app.js?v=4"), "app cache pin");
   assert.deepEqual(errors, [], "console errors: " + errors.join(" | "));
 });
 
@@ -374,4 +374,24 @@ test("app.js grain formatter is BigInt-exact (pool float-format class)", async (
   const src = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "..", "app.js"), "utf8");
   assert.ok(src.includes("100000000n"), "BigInt-exact grain formatter present");
   assert.ok(src.includes("/^-?\\d+$/"), "integer-grain gate present");
+});
+
+test("forge rejects silently-truncated tick counts", () => {
+  const e = E();
+  $("beneficiary").value = e.walletFromMnemonic(BEN_MNEMONIC, e.NETWORKS.mainnet).address;
+  $("funder").value = FUNDER_MNEMONIC;
+  $("rate").value = "1";
+  $("tick-value").value = "7";
+  $("tick-unit").value = "86400";
+  $("start").value = "2030-01-01T00:00";
+  $("ticks").value = "12.9";
+  $("forge").click();
+  assert.equal($("forge-err").hidden, false);
+  assert.ok(/tick count/.test($("forge-err").textContent), "error text: " + $("forge-err").textContent);
+  $("ticks").value = "1e2";
+  $("forge").click();
+  assert.equal($("forge-err").hidden, false);
+  assert.ok(/tick count/.test($("forge-err").textContent), "error text: " + $("forge-err").textContent);
+  assert.ok(html.includes("app.js?v=4"), "app cache pin");
+  assert.deepEqual(errors, [], "console errors: " + errors.join(" | "));
 });
