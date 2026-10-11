@@ -28,6 +28,7 @@ import {
   encodeListing, decodeListing,
   selectCoinsSimple, planTransferLot,
   idxGetTokens, idxGetTransferLots, idxGetUtxos,
+  fetchUtxos,
   loadBoard, saveBoard, boardAddListing, boardCancelListing, boardAddBid, boardCancelBid, boardAddTrade,
   loadSettings, saveSettings,
   mulberry32, demoTokens, demoBook, tapeMovers,
@@ -409,6 +410,30 @@ function signedListing(over = {}) {
   await idxGetTokens("", mockFetch).then(() => ok("idx-empty-base-throws", false), () => ok("idx-empty-base-throws", true));
   const badFetch = async () => ({ ok: false, status: 500 });
   await idxGetTokens("https://idx.example", badFetch).then(() => ok("idx-http-error", false), () => ok("idx-http-error", true));
+}
+
+/* ============ 7b. blockbook fetchUtxos exactness (stubbed fetch) ============ */
+{
+  const realFetch = globalThis.fetch;
+  const stubUtxos = (list) => {
+    globalThis.fetch = async () => ({ ok: true, text: async () => JSON.stringify(list) });
+  };
+  try {
+    stubUtxos([{ txid: "ab".repeat(32), vout: 1, value: "250000000", confirmations: 2 }]);
+    const good = await fetchUtxos("https://bb.example", "prl1xyz");
+    ok("fetch-utxos-exact", good.length === 1 && good[0].value === 250000000 && good[0].vout === 1);
+    // Past MAX_SAFE_INTEGER a bare Number() rounds (…993 -> …992, …995 -> …996):
+    // the fetch must refuse loudly instead of returning a rounded funding UTXO.
+    for (const raw of ["9007199254740993", "9007199254740995"]) {
+      stubUtxos([{ txid: "ab".repeat(32), vout: 0, value: raw, confirmations: 1 }]);
+      await fetchUtxos("https://bb.example", "prl1xyz").then(
+        () => ok("fetch-utxos-refuses-unsafe-" + raw, false, "did not throw"),
+        (e) => ok("fetch-utxos-refuses-unsafe-" + raw, /too large to handle exactly/.test(e.message)),
+      );
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 }
 
 /* ============ 8. board / settings / demo ============ */
